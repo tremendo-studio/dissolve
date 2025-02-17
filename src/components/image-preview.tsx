@@ -27,22 +27,35 @@ export function ImagePreview({ image }: { image: File }) {
       speedY: number
       offsetX: number
       offsetY: number
-      randomOpacity: number
       originalX: number
       originalY: number
     }[]
   >([])
 
-  let [imageBitmap] = createResource(image, () => createImageBitmap(image))
+  let isLoading = () => progress() < 100
+
+  let [imageBitmap] = createResource(image, async () => {
+    let img = await createImageBitmap(image)
+    let cnv = new OffscreenCanvas(img.width, img.height)
+    let ctx = cnv.getContext("2d")!
+
+    cnv.width = img.width
+    cnv.height = img.height
+
+    ctx.drawImage(img, 0, 0)
+    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    let data = imageData.data
+    let pixelSize = Math.floor(cnv.width / 100)
+
+    let rows = []
+    for (let y = 0; y < cnv.height; y += pixelSize) {
+      rows.push
+    }
+  })
 
   let timer = setInterval(() => {
-    if (progress() < 73) {
-      setProgress(progress() === 0 ? 5 : Math.floor(progress() * 1.5))
-      return
-    } else if (progress() >= 73 && progress() < 100) {
-      setProgress(progress() + 1)
-      return
-    }
+    if (progress() < 73) return setProgress((prev) => (prev === 0 ? 5 : Math.floor(prev * 1.5)))
+    if (progress() >= 73 && progress() < 100) return setProgress((prev) => prev + 1)
     clearInterval(timer)
   }, 100)
   onCleanup(() => clearInterval(timer))
@@ -60,9 +73,9 @@ export function ImagePreview({ image }: { image: File }) {
     ctx.drawImage(img, 0, 0)
     let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     let data = imageData.data
-    let pixelSize = 10 // Adjust for bigger/smaller circles
+    let pixelSize = Math.floor(canvas.width / 100)
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height) // Clear the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     let newData = []
 
@@ -74,15 +87,8 @@ export function ImagePreview({ image }: { image: File }) {
         let b = data[index + 2]
         let a = data[index + 3] / 255
 
-        // Apply random opacity
         let randomOpacity = Math.random() > opacity()[0] ? 0 : a
-
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${randomOpacity})`
-
-        // Draw circle
-        // ctx.beginPath()
-        // ctx.arc(x + radius, y + radius, radius, 0, Math.PI * 2)
-        // ctx.fill()
 
         newData.push({
           x,
@@ -90,10 +96,10 @@ export function ImagePreview({ image }: { image: File }) {
           originalX: x,
           originalY: y,
           color: `rgba(${r}, ${g}, ${b}, ${randomOpacity})`,
-          offsetX: Math.random() * 2 - 1, // Random small offset
-          offsetY: Math.random() * 2 - 1, // Random small offset
-          speedX: (Math.random() - 0.5) * speedX()[0], // Small speed in X
-          speedY: (Math.random() - 0.5) * speedY()[0], // Small speed in Y
+          offsetX: Math.random() * 2 - 1,
+          offsetY: Math.random() * 2 - 1,
+          speedX: (Math.random() - 0.5) * speedX()[0],
+          speedY: (Math.random() - 0.5) * speedY()[0],
         })
       }
     }
@@ -107,28 +113,26 @@ export function ImagePreview({ image }: { image: File }) {
 
   let animate = () => {
     let ctx = canvas.getContext("2d")
+    let radiusValue = radius()[0]
     if (!ctx) return
-    ctx.clearRect(0, 0, canvas.width, canvas.height) // Clear the canvas
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     shapesData().forEach((p) => {
-      // Update position with a slight oscillation effect
-      p.offsetX += p.speedX
-      p.offsetY += p.speedY
+      p.offsetX = p.offsetX + p.speedX
+      p.offsetY = p.offsetY + p.speedY
 
-      //   let radius = 5
+      let maxOffset = 5
 
-      // Keep particles floating near their original position
-      let maxOffset = 5 // Maximum displacement in any direction
-      if (Math.abs(p.offsetX) > maxOffset) p.speedX *= -1
-      if (Math.abs(p.offsetY) > maxOffset) p.speedY *= -1
+      if (Math.abs(p.offsetX) > maxOffset) p.speedX = p.speedX * -1
+      if (Math.abs(p.offsetY) > maxOffset) p.speedY = p.speedY * -1
 
-      // Draw floating circle
       ctx.fillStyle = p.color
       ctx.beginPath()
       ctx.arc(
-        p.originalX + p.offsetX + radius()[0],
-        p.originalY + p.offsetY + radius()[0],
-        radius()[0],
+        p.originalX + p.offsetX + radiusValue,
+        p.originalY + p.offsetY + radiusValue,
+        radiusValue,
         0,
         Math.PI * 2,
       )
@@ -143,7 +147,7 @@ export function ImagePreview({ image }: { image: File }) {
   return (
     <div class="flex w-full flex-col items-center p-4 text-sm">
       <Switch>
-        <Match when={progress() < 100}>
+        <Match when={isLoading()}>
           <Progress class="flex w-full flex-col gap-y-0.5" value={progress()}>
             <div>
               <Progress.Label>Processing file...</Progress.Label>
@@ -154,7 +158,7 @@ export function ImagePreview({ image }: { image: File }) {
             </Progress.Track>
           </Progress>
         </Match>
-        <Match when={progress() === 100}>
+        <Match when={!isLoading()}>
           {canvas}
           <div class="w-full py-4">
             <Slider onChange={setOpacity} value={opacity()} maxValue={1} step={0.001} />
