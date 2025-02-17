@@ -1,0 +1,28 @@
+{
+  "name": "app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "homepage": "https://{tremendo-studio}.github.io/{dissolve}/",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  },
+  "dependencies": {
+    "@kobalte/core": "^0.13.8",
+    "@tailwindcss/vite": "^4.0.6",
+    "solid-js": "^1.9.4",
+    "tailwindcss": "^4.0.6"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "prettier": "3.5.1",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "typescript": "~5.7.2",
+    "vite": "^6.1.0",
+    "vite-plugin-solid": "^2.11.0"
+  }
+}
