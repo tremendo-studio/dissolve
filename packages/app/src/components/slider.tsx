@@ -17,7 +17,7 @@ export function Slider<T extends ValidComponent>(props: SliderProps<T>) {
       >
         <SliderPrimitive.Track class="h-3 w-full bg-stone-600">
           <SliderPrimitive.Fill class="absolute h-full bg-stone-400" />
-          <SliderPrimitive.Thumb class="-top-0.5 h-4 w-4 rounded-full bg-slate-500">
+          <SliderPrimitive.Thumb class="-top-0.5 h-4 w-4 cursor-pointer rounded-full bg-slate-500 transition-colors hover:bg-slate-400">
             <SliderPrimitive.Input />
           </SliderPrimitive.Thumb>
         </SliderPrimitive.Track>

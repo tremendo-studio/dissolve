@@ -40,14 +40,15 @@ export function ImagePreview({ image }: { image: File }) {
   let [radius, setRadius] = createSignal([3])
   let [speedX, setSpeedX] = createSignal([0.2])
   let [speedY, setSpeedY] = createSignal([0.2])
+  let [scale, setScale] = createSignal([1])
 
   let isLoading = () => progress() < 100
 
   onMount(async () => {
     let img = await createImageBitmap(image)
 
-    let maxWidth = 448
-    let maxHeight = 448
+    let maxWidth = 360
+    let maxHeight = 360
 
     let width = img.width
     let height = img.height
@@ -103,6 +104,7 @@ export function ImagePreview({ image }: { image: File }) {
     if (progress() !== 100 || !imageData()) return
 
     let { pixelData, width, height } = imageData()!
+    let scaleFactor = scale()[0] // Get scale factor
 
     let points = pixelData.map((point) => ({
       ...point,
@@ -111,36 +113,40 @@ export function ImagePreview({ image }: { image: File }) {
       offsetY: Math.random() * 2 - 1,
       speedX: (Math.random() - 0.5) * speedX()[0],
       speedY: (Math.random() - 0.5) * speedY()[0],
+
+      // ✅ Fix: Scale original positions
+      scaledX: point.originalX * scaleFactor,
+      scaledY: point.originalY * scaleFactor,
     }))
 
     let frame = requestAnimationFrame(loop)
 
-    canvasRef.width = width
-    canvasRef.height = height
+    canvasRef.width = width * scaleFactor
+    canvasRef.height = height * scaleFactor
 
     function loop() {
       frame = requestAnimationFrame(loop)
 
-      let maxOffset = 5
+      let maxOffset = 5 * scaleFactor // ✅ Scale the movement offsets
       let ctx = canvasRef.getContext("2d")!
-      let radiusValue = radius()[0]
+      let radiusValue = radius()[0] * scaleFactor // ✅ Scale radius
 
       ctx.clearRect(0, 0, canvasRef.width, canvasRef.height)
 
       for (let point of points) {
-        point.offsetX = point.offsetX + point.speedX
-        point.offsetY = point.offsetY + point.speedY
+        point.offsetX += point.speedX
+        point.offsetY += point.speedY
 
-        if (Math.abs(point.offsetX) > maxOffset) point.speedX = point.speedX * -1
-        if (Math.abs(point.offsetY) > maxOffset) point.speedY = point.speedY * -1
+        if (Math.abs(point.offsetX) > maxOffset) point.speedX *= -1
+        if (Math.abs(point.offsetY) > maxOffset) point.speedY *= -1
 
         ctx.fillStyle = point.color
         ctx.beginPath()
 
         ctx.arc(
-          point.originalX + point.offsetX + radiusValue,
-          point.originalY + point.offsetY + radiusValue,
-          radiusValue,
+          point.scaledX + point.offsetX + radiusValue, // ✅ Use scaledX
+          point.scaledY + point.offsetY + radiusValue, // ✅ Use scaledY
+          radiusValue, // ✅ Scale the circle size
           0,
           Math.PI * 2,
         )
@@ -167,12 +173,15 @@ export function ImagePreview({ image }: { image: File }) {
           </Progress>
         </Match>
         <Match when={!isLoading()}>
-          <canvas ref={canvasRef}></canvas>
-          <div class="w-full py-4">
+          <div class="fixed inset-0 flex -translate-y-2.5 items-center justify-center">
+            <canvas ref={canvasRef}></canvas>
+          </div>
+          <div class="absolute bottom-0 w-full max-w-[360px] py-4">
             <Slider onChange={setOpacity} value={opacity()} maxValue={1} step={0.001} />
             <Slider onChange={setRadius} value={radius()} maxValue={20} minValue={2} step={0.1} />
             <Slider onChange={setSpeedX} value={speedX()} maxValue={5} minValue={0} step={0.01} />
             <Slider onChange={setSpeedY} value={speedY()} maxValue={5} minValue={0} step={0.01} />
+            <Slider onChange={setScale} value={scale()} maxValue={10} minValue={0.5} step={0.01} />
           </div>
         </Match>
       </Switch>
