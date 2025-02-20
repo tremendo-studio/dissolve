@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "@tremendo-dissolve/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -19,10 +19,11 @@
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
+    "vite-plugin-solid": "^2.11.0",
     "prettier": "3.5.1",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "typescript": "~5.7.2",
-    "vite": "^6.1.0",
-    "vite-plugin-solid": "^2.11.0"
+    "vite": "^6.1.0"
   }
+  
 }

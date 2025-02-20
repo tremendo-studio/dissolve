@@ -1,8 +1,11 @@
 {
-  "name": "dissolve",
+  "name": "tremendo-dissolve",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "scripts": {
+    "dev": "pnpm run -r --parallel --aggregate-output dev"
+  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
