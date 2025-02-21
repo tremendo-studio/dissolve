@@ -32,6 +32,7 @@ type ImageData = {
 
 export function ImagePreview({ image }: { image: File }) {
   let canvasRef!: HTMLCanvasElement
+  let dissolveRef!: HTMLElement
 
   let [progress, setProgress] = createSignal(0)
   let [imageData, setImageData] = createSignal<ImageData | null>(null)
@@ -114,22 +115,20 @@ export function ImagePreview({ image }: { image: File }) {
       speedX: (Math.random() - 0.5) * speedX()[0],
       speedY: (Math.random() - 0.5) * speedY()[0],
 
-      // ✅ Fix: Scale original positions
       scaledX: point.originalX * scaleFactor,
       scaledY: point.originalY * scaleFactor,
     }))
 
     let frame = requestAnimationFrame(loop)
-
     canvasRef.width = width * scaleFactor
     canvasRef.height = height * scaleFactor
 
     function loop() {
       frame = requestAnimationFrame(loop)
 
-      let maxOffset = 5 * scaleFactor // ✅ Scale the movement offsets
+      let maxOffset = 5 * scaleFactor
       let ctx = canvasRef.getContext("2d")!
-      let radiusValue = radius()[0] * scaleFactor // ✅ Scale radius
+      let radiusValue = radius()[0] * scaleFactor
 
       ctx.clearRect(0, 0, canvasRef.width, canvasRef.height)
 
@@ -144,9 +143,9 @@ export function ImagePreview({ image }: { image: File }) {
         ctx.beginPath()
 
         ctx.arc(
-          point.scaledX + point.offsetX + radiusValue, // ✅ Use scaledX
-          point.scaledY + point.offsetY + radiusValue, // ✅ Use scaledY
-          radiusValue, // ✅ Scale the circle size
+          point.scaledX + point.offsetX + radiusValue,
+          point.scaledY + point.offsetY + radiusValue,
+          radiusValue,
           0,
           Math.PI * 2,
         )
@@ -156,6 +155,14 @@ export function ImagePreview({ image }: { image: File }) {
     }
 
     onCleanup(() => cancelAnimationFrame(frame))
+  })
+
+  createEffect(() => {
+    if (!isLoading()) {
+      console.debug("Setting attributes")
+      dissolveRef.setAttribute("points", JSON.stringify(imageData()))
+      dissolveRef.setAttribute("radius", String(radius()[0]))
+    }
   })
 
   return (
@@ -168,7 +175,7 @@ export function ImagePreview({ image }: { image: File }) {
               <Progress.ValueLabel />
             </div>
             <Progress.Track class="h-4 w-full bg-stone-600">
-              <Progress.Fill class="w-(--kb-progress-fill-width) h-4 bg-stone-400 transition-[width] duration-100" />
+              <Progress.Fill class="h-4 w-(--kb-progress-fill-width) bg-stone-400 transition-[width] duration-100" />
             </Progress.Track>
           </Progress>
         </Match>
@@ -176,6 +183,7 @@ export function ImagePreview({ image }: { image: File }) {
           <div class="fixed inset-0 flex -translate-y-2.5 items-center justify-center">
             <canvas ref={canvasRef}></canvas>
           </div>
+          <tremendo-dissolve ref={dissolveRef}></tremendo-dissolve>
           <div class="absolute bottom-0 w-full max-w-[360px] py-4">
             <Slider onChange={setOpacity} value={opacity()} maxValue={1} step={0.001} />
             <Slider onChange={setRadius} value={radius()} maxValue={20} minValue={2} step={0.1} />

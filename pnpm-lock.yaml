@@ -13,6 +13,9 @@ importers:
       '@kobalte/core':
         specifier: ^0.13.8
         version: 0.13.8(solid-js@1.9.4)
+      '@solid-primitives/script-loader':
+        specifier: ^2.3.0
+        version: 2.3.0(solid-js@1.9.4)
       '@tailwindcss/vite':
         specifier: ^4.0.6
         version: 4.0.7(vite@6.1.0(@types/node@22.13.4)(jiti@2.4.2)(lightningcss@1.29.1))
@@ -479,6 +482,11 @@ packages:
 
   '@solid-primitives/rootless@1.5.0':
     resolution: {integrity: sha512-YJ+EveQeDv9DLqfDKfsPAAGy2x3vBruoD23yn+nD2dT84QjoBxWT1T0qA0TMFjek6/xuN3flqnHtQ4r++4zdjg==}
+    peerDependencies:
+      solid-js: ^1.6.12
+
+  '@solid-primitives/script-loader@2.3.0':
+    resolution: {integrity: sha512-K2ZwBJeCsDJWKuK9mvkf11BU30h6lCX/P0aahvpdpa8ROnk3doE6qIJDJaAMO8shQKwsZSXEyvlbXcJ3Tg0XcQ==}
     peerDependencies:
       solid-js: ^1.6.12
 
@@ -1508,6 +1516,10 @@ snapshots:
   '@solid-primitives/rootless@1.5.0(solid-js@1.9.4)':
     dependencies:
       '@solid-primitives/utils': 6.3.0(solid-js@1.9.4)
+      solid-js: 1.9.4
+
+  '@solid-primitives/script-loader@2.3.0(solid-js@1.9.4)':
+    dependencies:
       solid-js: 1.9.4
 
   '@solid-primitives/static-store@0.1.0(solid-js@1.9.4)':
