@@ -16,7 +16,8 @@
     "@solid-primitives/script-loader": "^2.3.0",
     "@tailwindcss/vite": "^4.0.6",
     "solid-js": "^1.9.4",
-    "tailwindcss": "^4.0.6"
+    "tailwindcss": "^4.0.6",
+    "@tremendo-dissolve/dissolve": "workspace:^"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",

@@ -3,16 +3,16 @@ import { ImageUploader } from "./components/file-field"
 import { createEffect } from "solid-js"
 
 function App() {
-  createScriptLoader({
-    src: "http://localhost:4173/tremendo-dissolve.iife.js",
-    async onLoad() {},
-  })
+  // createScriptLoader({
+  //   src: "http://localhost:4173/tremendo-dissolve.iife.js",
+  //   async onLoad() {},
+  // })
 
-  createEffect(() => {
-    customElements
-      .whenDefined("tremendo-dissolve")
-      .then(() => console.debug("Custom element defined"))
-  })
+  // createEffect(() => {
+  //   customElements
+  //     .whenDefined("tremendo-dissolve")
+  //     .then(() => console.debug("Custom element defined"))
+  // })
 
   return (
     <div class="flex h-svh flex-col gap-y-4 bg-stone-900 px-7 py-12 font-mono font-semibold text-stone-100">

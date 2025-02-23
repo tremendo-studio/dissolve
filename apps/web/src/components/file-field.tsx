@@ -20,7 +20,7 @@ export function ImageUploader() {
       >
         <Switch>
           <Match when={!showPreview()}>
-            <div class="flex w-full max-w-[360px] flex-col items-center gap-y-2 border-2 border-dashed border-stone-600 text-sm font-normal">
+            <div class="m-auto flex w-full max-w-[360px] flex-col items-center gap-y-2 border-2 border-dashed border-stone-600 text-sm font-normal">
               <FileField.Dropzone class="flex flex-col gap-y-2 p-4">
                 Drop your image here...
                 <FileField.Trigger class="cursor-pointer rounded-sm bg-slate-500 px-4 py-2 transition-colors hover:bg-slate-400">
@@ -31,7 +31,7 @@ export function ImageUploader() {
             </div>
           </Match>
           <Match when={showPreview() && file()}>
-            <div class="flex flex-col items-center gap-y-2 p-4 text-sm font-normal">
+            <div class="m-auto flex w-full max-w-[360px] flex-col items-center gap-y-2 p-4 text-sm font-normal">
               <ImagePreview image={file()!} />
             </div>
           </Match>

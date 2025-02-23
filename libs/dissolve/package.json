@@ -1,8 +1,9 @@
 {
-  "name": "dissolve",
+  "name": "@tremendo-dissolve/dissolve",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./lib/main.ts",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

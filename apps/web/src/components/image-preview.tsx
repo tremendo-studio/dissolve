@@ -1,47 +1,38 @@
-import { Progress } from "@kobalte/core/progress"
-import {
-  Accessor,
-  createEffect,
-  createMemo,
-  createResource,
-  createSignal,
-  Match,
-  on,
-  onCleanup,
-  onMount,
-  Switch,
-} from "solid-js"
-import { Slider } from "./slider"
+import { Progress } from '@kobalte/core/progress'
+import { createEffect, createSignal, Match, onCleanup, onMount, Switch } from 'solid-js'
+import { Slider } from './slider'
+
+import { createAnimation } from '@tremendo-dissolve/dissolve'
 
 type Point = {
   x: number
   y: number
-  originalX: number
-  originalY: number
   r: number
   g: number
   b: number
   a: number
 }
 
-type ImageData = {
+type AnimationData = {
   width: number
   height: number
-  pixelData: Point[]
+  pixels: Point[]
 }
 
+let html = String.raw
+
 export function ImagePreview({ image }: { image: File }) {
-  let canvasRef!: HTMLCanvasElement
-  let dissolveRef!: HTMLElement
+  let animationContainer!: HTMLDivElement
 
   let [progress, setProgress] = createSignal(0)
-  let [imageData, setImageData] = createSignal<ImageData | null>(null)
+  let [imageData, setImageData] = createSignal<AnimationData | null>(null)
 
   let [opacity, setOpacity] = createSignal([0.7])
   let [radius, setRadius] = createSignal([3])
   let [speedX, setSpeedX] = createSignal([0.2])
   let [speedY, setSpeedY] = createSignal([0.2])
-  let [scale, setScale] = createSignal([1])
+
+  let [containerSize, setContainerSize] = createSignal({ width: 360, height: 360 })
 
   let isLoading = () => progress() < 100
 
@@ -61,7 +52,7 @@ export function ImagePreview({ image }: { image: File }) {
         : { canvasWidth: maxHeight * aspectRatio, canvasHeight: maxHeight }
 
     let offscreenCanvas = new OffscreenCanvas(canvasWidth, canvasHeight)
-    let ctx = offscreenCanvas.getContext("2d")!
+    let ctx = offscreenCanvas.getContext('2d')!
 
     ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight)
     let imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
@@ -87,8 +78,6 @@ export function ImagePreview({ image }: { image: File }) {
         points.push({
           x,
           y,
-          originalX: x,
-          originalY: y,
           r,
           g,
           b,
@@ -98,72 +87,57 @@ export function ImagePreview({ image }: { image: File }) {
     }
 
     setProgress(100)
-    setImageData({ pixelData: points, width: canvasWidth, height: canvasHeight })
+    setImageData({ pixels: points, width: canvasWidth, height: canvasHeight })
   })
 
   createEffect(() => {
-    if (progress() !== 100 || !imageData()) return
+    if (isLoading() || !imageData()) return
 
-    let { pixelData, width, height } = imageData()!
-    let scaleFactor = scale()[0] // Get scale factor
+    containerSize()
 
-    let points = pixelData.map((point) => ({
-      ...point,
-      color: `rgba(${point.r}, ${point.g}, ${point.b}, ${Math.random() > opacity()[0] ? 0 : point.a})`,
-      offsetX: Math.random() * 2 - 1,
-      offsetY: Math.random() * 2 - 1,
-      speedX: (Math.random() - 0.5) * speedX()[0],
-      speedY: (Math.random() - 0.5) * speedY()[0],
+    let clean = createAnimation(animationContainer, {
+      ...imageData()!,
+      opacity: opacity()[0],
+      speedX: speedX()[0],
+      speedY: speedY()[0],
+      radius: radius()[0],
+    })
 
-      scaledX: point.originalX * scaleFactor,
-      scaledY: point.originalY * scaleFactor,
-    }))
-
-    let frame = requestAnimationFrame(loop)
-    canvasRef.width = width * scaleFactor
-    canvasRef.height = height * scaleFactor
-
-    function loop() {
-      frame = requestAnimationFrame(loop)
-
-      let maxOffset = 5 * scaleFactor
-      let ctx = canvasRef.getContext("2d")!
-      let radiusValue = radius()[0] * scaleFactor
-
-      ctx.clearRect(0, 0, canvasRef.width, canvasRef.height)
-
-      for (let point of points) {
-        point.offsetX += point.speedX
-        point.offsetY += point.speedY
-
-        if (Math.abs(point.offsetX) > maxOffset) point.speedX *= -1
-        if (Math.abs(point.offsetY) > maxOffset) point.speedY *= -1
-
-        ctx.fillStyle = point.color
-        ctx.beginPath()
-
-        ctx.arc(
-          point.scaledX + point.offsetX + radiusValue,
-          point.scaledY + point.offsetY + radiusValue,
-          radiusValue,
-          0,
-          Math.PI * 2,
-        )
-
-        ctx.fill()
-      }
-    }
-
-    onCleanup(() => cancelAnimationFrame(frame))
+    onCleanup(clean)
   })
 
   createEffect(() => {
-    if (!isLoading()) {
-      console.debug("Setting attributes")
-      dissolveRef.setAttribute("points", JSON.stringify(imageData()))
-      dissolveRef.setAttribute("radius", String(radius()[0]))
-    }
+    if (isLoading() || !imageData()) return
+
+    let resizeObserver = new ResizeObserver(() => {
+      setContainerSize({
+        width: animationContainer.offsetWidth,
+        height: animationContainer.offsetHeight,
+      })
+    })
+    resizeObserver.observe(animationContainer)
   })
+
+  let copy = () => {
+    let dataAnimation = btoa(
+      JSON.stringify({
+        ...imageData()!,
+        opacity: opacity()[0],
+        speedX: speedX()[0],
+        speedY: speedY()[0],
+        radius: radius()[0],
+      }),
+    )
+
+    navigator.clipboard.writeText(
+      html`<script
+        type="module"
+        src="http://localhost:4173/tremendo-dissolve.js"
+        id="tremendo-dissolve"
+        data-animation="${dataAnimation}"
+      ></script>`,
+    )
+  }
 
   return (
     <div class="flex w-full flex-col items-center p-4 text-sm">
@@ -180,16 +154,24 @@ export function ImagePreview({ image }: { image: File }) {
           </Progress>
         </Match>
         <Match when={!isLoading()}>
-          <div class="fixed inset-0 flex -translate-y-2.5 items-center justify-center">
-            <canvas ref={canvasRef}></canvas>
-          </div>
-          <tremendo-dissolve ref={dissolveRef}></tremendo-dissolve>
-          <div class="absolute bottom-0 w-full max-w-[360px] py-4">
+          <div
+            ref={animationContainer}
+            class="w-full max-w-[360px] items-center justify-center"
+          ></div>
+          <div class="w-full max-w-[360px] py-4">
             <Slider onChange={setOpacity} value={opacity()} maxValue={1} step={0.001} />
             <Slider onChange={setRadius} value={radius()} maxValue={20} minValue={2} step={0.1} />
             <Slider onChange={setSpeedX} value={speedX()} maxValue={5} minValue={0} step={0.01} />
             <Slider onChange={setSpeedY} value={speedY()} maxValue={5} minValue={0} step={0.01} />
-            <Slider onChange={setScale} value={scale()} maxValue={10} minValue={0.5} step={0.01} />
+          </div>
+          <div class="w-full max-w-[360px] py-1">
+            <button
+              type="button"
+              class="w-full cursor-pointer rounded-sm bg-slate-500 px-4 py-2 transition-colors hover:bg-slate-400 active:bg-slate-300"
+              on:click={() => copy()}
+            >
+              Copy
+            </button>
           </div>
         </Match>
       </Switch>
